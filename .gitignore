@@ -6,6 +6,7 @@ __pycache__/
 env/
 venv/
 backend/.venv/
+backend/static/
 *.env
 .env.local
 .env.*.local

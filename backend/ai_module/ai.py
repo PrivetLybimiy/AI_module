@@ -6,7 +6,7 @@ import time
 from .models import Student, Course, Grade, AIReport, AIUsageStats, Group, AIGroupReport
 from .prompts import STUDENT_REPORT_PROMPT, GROUP_REPORT_PROMPT
 
-AI_TOKEN = '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'
+AI_TOKEN = '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'
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
