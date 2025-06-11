@@ -1,17 +1,14 @@
 from datetime import timedelta
 from typing import Dict, Any
 from django.utils import timezone
-from openai import OpenAI
+import requests
 import time
+from pprint import pprint
 from .models import Student, Course, Grade, AIReport, AIUsageStats, Group, AIGroupReport
 from .prompts import STUDENT_REPORT_PROMPT, GROUP_REPORT_PROMPT
 
-AI_TOKEN = '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'
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=AI_TOKEN,
-)
+AI_TOKEN = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6ImFmMTIyOTkxLWQzMTItNGM2ZC1iMTM1LTJkMGU2ZjE1MWE0YSIsImV4cCI6NDkwMzIzODQ5N30.of40cClqrJd75AHg78CDiIJlypV2SDXc7P9XAiLY8F5RRzZmlvm-Er92FhN5okMp-GYf4d17Pdy_SmW2xPv2NQ'
+API_URL = "https://api.intelligence.io.solutions/api/v1/chat/completions"
 
 def update_ai_usage_stats(start_time: float) -> AIUsageStats:
     stats, _ = AIUsageStats.objects.get_or_create(id=1)
@@ -36,7 +33,7 @@ def get_grade_info(grade: Grade) -> Dict[str, Any]:
     }
 
 def generate_student_report_data(student: Student, course: Course, grades: Grade) -> tuple[str, list]:
-    report_data = f"Отчет о студенте {student.full_name} по курсе {course.title}:\n\nОценки:\n"
+    report_data = f"Отчет о студенте {student.full_name} по курсу {course.title}:\n\nОценки:\n"
     grades_list = []
     for grade in grades:
         grade_info = get_grade_info(grade)
@@ -66,16 +63,41 @@ def generate_group_report_data(group: Group, course: Course, students: list) -> 
     report_data += f"\nСредняя оценка по группе: {avg_group_grade:.2f}\nКоличество студентов: {students.count()}"
     return report_data, grades_list
 
-def call_openai_api(prompt: str) -> str:
-    completion = client.chat.completions.create(
-        model="deepseek/deepseek-chat",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    if not completion.choices or not completion.choices[0].message or not completion.choices[0].message.content:
-        raise ValueError("Нет данных от OpenAI для анализа")
-    report_text = completion.choices[0].message.content.strip()
-    paragraphs = [p.strip() for p in report_text.split('\n\n') if p.strip()]
-    return '\n\n'.join(paragraphs)
+def call_chat_api(prompt: str) -> str:
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {AI_TOKEN}"
+    }
+    data = {
+        "model": "deepseek-ai/DeepSeek-R1-0528",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+    
+    try:
+        response = requests.post(API_URL, headers=headers, json=data)
+        response.raise_for_status()  
+        response_data = response.json()
+        
+        if "choices" not in response_data or not response_data["choices"]:
+            raise ValueError("Ответ API не содержит 'choices'")
+        report_text = response_data["choices"][0]["message"]["content"].strip()
+
+        if '</think' in report_text:
+            report_text = report_text.split('</think>')[-1].strip()
+        
+        paragraphs = [p.strip() for p in report_text.split('\n\n') if p.strip()]
+        return '\n\n'.join(paragraphs)
+    
+    except requests.exceptions.HTTPError as http_err:
+        raise ValueError(f"HTTP ошибка: {http_err}, ответ: {response.text}")
+    except requests.exceptions.RequestException as req_err:
+        raise ValueError(f"Ошибка запроса: {req_err}")
+    except (KeyError, IndexError) as err:
+        raise ValueError(f"Ошибка обработки ответа: {err}, данные: {response_data}")
+    except ValueError as json_err:
+        raise ValueError(f"Ошибка парсинга JSON: {json_err}, ответ: {response.text}")
 
 def generate_ai_report(student_id: int, course_id: int) -> Dict[str, Any]:
     start_time = time.time()
@@ -93,7 +115,7 @@ def generate_ai_report(student_id: int, course_id: int) -> Dict[str, Any]:
 
         report_data, grades_list = generate_student_report_data(student, course, student_grades)
         prompt = STUDENT_REPORT_PROMPT.format(report_data=report_data)
-        report_text = call_openai_api(prompt)
+        report_text = call_chat_api(prompt)
 
         stats = update_ai_usage_stats(start_time)
         stats.success_count += 1
@@ -147,7 +169,7 @@ def generate_ai_group_report(group_id: int, course_id: int) -> Dict[str, Any]:
             return {"success": False, "error": "Оценки для группы отсутствуют"}
 
         prompt = GROUP_REPORT_PROMPT.format(report_data=report_data)
-        report_text = call_openai_api(prompt)
+        report_text = call_chat_api(prompt)
 
         stats = update_ai_usage_stats(start_time)
         stats.success_count += 1
