@@ -67,7 +67,7 @@ COPY public.ai_module_aireport (id, report, created_at, course_id, student_id, i
 --
 
 COPY public.ai_module_aiusagestats (id, request_count, success_count, total_response_time, last_24h_requests, last_updated) FROM stdin;
-1	1	0	0.9465014934539795	1	2025-06-11 00:44:09.781846+00
+1	0	0	0	0	2025-06-11 01:29:00.741348+00
 \.
 
 
@@ -413,6 +413,7 @@ COPY public.django_admin_log (id, action_time, object_id, object_repr, action_fl
 152	2025-06-11 00:06:24.505193+00	1	admin (Администратор)	2	[{"changed": {"fields": ["Email"]}}]	8	1
 153	2025-06-11 00:06:42.383693+00	5	admin (Администратор)	1	[{"added": {}}]	8	1
 154	2025-06-11 00:07:06.629593+00	1	Статистика AI: 0 запросов	2	[{"changed": {"fields": ["Request count", "Total response time", "Last 24h requests"]}}]	14	1
+155	2025-06-11 01:29:00.743522+00	1	Статистика AI: 0 запросов	2	[{"changed": {"fields": ["Request count", "Total response time", "Last 24h requests"]}}]	14	1
 \.
 
 
@@ -576,7 +577,7 @@ SELECT pg_catalog.setval('public.auth_permission_id_seq', 64, true);
 -- Name: django_admin_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.django_admin_log_id_seq', 154, true);
+SELECT pg_catalog.setval('public.django_admin_log_id_seq', 155, true);
 
 
 --
