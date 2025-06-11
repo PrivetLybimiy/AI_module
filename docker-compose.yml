@@ -17,14 +17,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile.backend
       args:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_USER: postgres 
+        POSTGRES_PASSWORD: 01233210 
+        POSTGRES_DB: AI_module
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DATABASE_URL=postgresql://postgres:01233210@db:5432/AI_module
+      - DJANGO_SECRET_KEY=Zkkv7rnashVeruYHD9ks98H-nxUhMXWjXugbwi8Wgm33BH1ND9D8uPFJw0SS34FYpa8 
       - DJANGO_DEBUG=False
     depends_on:
       db:
@@ -40,11 +40,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/data/data.sql:/docker-entrypoint-initdb.d/data.sql
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=postgres 
+      - POSTGRES_PASSWORD=01233210 
+      - POSTGRES_DB=AI_module
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d AI_module"]
       interval: 10s
       timeout: 5s
       retries: 5
