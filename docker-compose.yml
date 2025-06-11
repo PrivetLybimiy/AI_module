@@ -38,6 +38,7 @@ services:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/data/data.sql:/docker-entrypoint-initdb.d/data.sql
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
